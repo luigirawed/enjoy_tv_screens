@@ -1,0 +1,109 @@
+.display-code-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    padding: 2rem;
+}
+
+.display-code-content {
+    text-align: center;
+    max-width: 600px;
+}
+
+.display-icon {
+    color: #4f46e5;
+    margin-bottom: 1rem;
+}
+
+.display-code-screen h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+}
+
+.display-subtitle {
+    font-size: 1.1rem;
+    color: #94a3b8;
+    margin-bottom: 2rem;
+}
+
+.code-display {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.code-label {
+    display: block;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    margin-bottom: 0.5rem;
+}
+
+.code-value {
+    font-size: 4rem;
+    font-weight: 700;
+    letter-spacing: 8px;
+    color: #4f46e5;
+    font-family: 'Courier New', monospace;
+}
+
+.refresh-btn {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.2s;
+}
+
+.refresh-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+}
+
+.instructions {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: left;
+    margin: 2rem 0;
+}
+
+.instructions h2 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #e2e8f0;
+}
+
+.instructions ol {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.instructions li {
+    margin-bottom: 0.5rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+}
+
+.instructions strong {
+    color: #4f46e5;
+}
+
+.display-id-info {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 2rem;
+}

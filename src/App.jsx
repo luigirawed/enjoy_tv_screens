@@ -1,25 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import PinScreen from './components/PinScreen';
 import SlideViewer from './components/SlideViewer';
 import SettingsMenu from './components/SettingsMenu';
+import DisplayCodeScreen from './components/DisplayCodeScreen';
+import AdminScreen from './components/AdminScreen';
 import { fetchAllSlideImages } from './api/slides-fetcher';
 import { preloadImages } from './utils/image-cache';
 import { startScheduler } from './utils/scheduler';
-import { getPublicIP, isIPAllowed } from './utils/ip-check';
+import { isDisplayAuthorized, isAdminMode, revokeAuthorization } from './utils/display-pairing';
 import './App.css';
 
 function App() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ipAllowed, setIpAllowed] = useState(null); // null = checking
 
-  // PIN gate
-  const correctPin = import.meta.env.VITE_ACCESS_PIN;
-  const [pinVerified, setPinVerified] = useState(() => {
-    // If no PIN is configured, skip the gate entirely
-    if (!correctPin) return true;
-    return localStorage.getItem('tv_pin_verified') === 'true';
+  // Check if we're in admin mode (for pairing displays)
+  const isAdmin = isAdminMode();
+
+  // Check if this display is authorized
+  const [isAuthorized, setIsAuthorized] = useState(() => {
+    if (isAdmin) return true; // Admin mode doesn't need authorization
+    return isDisplayAuthorized();
   });
 
   // Settings state
@@ -35,20 +36,6 @@ function App() {
     localStorage.getItem('tv_paused') === 'true'
   );
 
-  // Check IP allowlist on load
-  useEffect(() => {
-    async function checkIP() {
-      const allowlist = import.meta.env.VITE_ALLOWED_IPS;
-      if (!allowlist) {
-        setIpAllowed(true);
-        return;
-      }
-      const ip = await getPublicIP();
-      setIpAllowed(isIPAllowed(ip, allowlist));
-    }
-    checkIP();
-  }, []);
-
   // Save settings when changed
   useEffect(() => {
     localStorage.setItem('tv_interval', intervalSecs.toString());
@@ -57,7 +44,7 @@ function App() {
 
   // Main slide fetcher
   const loadSlides = useCallback(async () => {
-    if (!pinVerified || !presentationId) {
+    if (!isAuthorized || !presentationId) {
       setImages([]);
       setLoading(false);
       return;
@@ -76,7 +63,7 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [pinVerified, presentationId]);
+  }, [isAuthorized, presentationId]);
 
   // Initial load
   useEffect(() => {
@@ -85,7 +72,7 @@ function App() {
 
   // Background 6-hour scheduler
   useEffect(() => {
-    if (!pinVerified || !presentationId) return;
+    if (!isAuthorized || !presentationId) return;
 
     const cleanup = startScheduler(() => {
       console.log("Executing scheduled background refresh");
@@ -93,7 +80,7 @@ function App() {
     });
 
     return () => cleanup();
-  }, [pinVerified, presentationId, loadSlides]);
+  }, [isAuthorized, presentationId, loadSlides]);
 
   // TV Remote Listener for opening settings
   useEffect(() => {
@@ -106,28 +93,17 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSettings]);
 
-  // IP check gate
-  if (ipAllowed === null) {
-    return (
-      <div className="fullscreen-loader">
-        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="loader-logo" />
-        <div className="spinner"></div>
-      </div>
-    );
+  // Render admin screen if in admin mode
+  if (isAdmin) {
+    return <AdminScreen onComplete={() => {
+      // Remove admin param and reload
+      window.location.href = window.location.pathname;
+    }} />;
   }
 
-  if (ipAllowed === false) {
-    return (
-      <div className="blocked-screen">
-        <h1>Access Restricted</h1>
-        <p>This display is not authorized to run from this network.</p>
-      </div>
-    );
-  }
-
-  // PIN gate
-  if (!pinVerified) {
-    return <PinScreen onSuccess={() => setPinVerified(true)} />;
+  // Render setup screen if not authorized
+  if (!isAuthorized) {
+    return <DisplayCodeScreen />;
   }
 
   return (
@@ -167,14 +143,14 @@ function App() {
         isPaused={isPaused}
         setPaused={setIsPaused}
         presentationId={presentationId}
-        setPresentationId={() => {}} // Read-only from env now
+        setPresentationId={() => { }} // Read-only from env now
         onForceRefresh={() => {
           loadSlides();
           setShowSettings(false);
         }}
         onLogout={() => {
-          localStorage.removeItem('tv_pin_verified');
-          setPinVerified(false);
+          revokeAuthorization();
+          setIsAuthorized(false);
         }}
       />
     </div>
