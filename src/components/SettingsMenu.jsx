@@ -104,7 +104,7 @@ export default function SettingsMenu({
             
             <button className="action-btn danger tv-focusable" onClick={onLogout}>
               <LogOut size={20} />
-              Disconnect Account
+              Lock Display
             </button>
           </div>
         </div>

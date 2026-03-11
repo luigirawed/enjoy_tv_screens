@@ -1,24 +1,21 @@
-import { getValidToken } from './google-auth';
+import { getApiKey } from './api-key';
 
 const SLIDES_API_BASE = 'https://slides.googleapis.com/v1/presentations';
 
 /**
- * Validates the token and fetches the presentation metadata including all slides.
- * @param {string} presentationId 
- * @returns {Array} Array of slide objects
+ * Fetches all slides from a public presentation using an API key.
  */
 export async function fetchPresentationSlides(presentationId) {
-  const token = await getValidToken();
-  if (!token) throw new Error('Not authenticated');
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Missing API Key');
 
-  const response = await fetch(`${SLIDES_API_BASE}/${presentationId}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await fetch(`${SLIDES_API_BASE}/${presentationId}?key=${apiKey}`);
 
   if (!response.ok) {
-    if (response.status === 401) throw new Error('Unauthorized');
     if (response.status === 404) throw new Error('Presentation not found');
-    throw new Error('Failed to fetch presentation metadata');
+    if (response.status === 403) throw new Error('Presentation is not public or API key is invalid');
+    const errData = await response.json().catch(() => ({}));
+    throw new Error(errData.error?.message || `API error ${response.status}`);
   }
 
   const data = await response.json();
@@ -26,19 +23,14 @@ export async function fetchPresentationSlides(presentationId) {
 }
 
 /**
- * Fetches a high-quality thumbnail URL for a specific slide.
- * Note: These URLs expire after 30 minutes.
- * @param {string} presentationId 
- * @param {string} pageObjectId 
- * @returns {string} Temporary thumbnail URL
+ * Fetches a thumbnail URL for a specific slide using an API key.
  */
 export async function fetchSlideThumbnailUrl(presentationId, pageObjectId) {
-  const token = await getValidToken();
-  if (!token) throw new Error('Not authenticated');
+  const apiKey = getApiKey();
+  if (!apiKey) throw new Error('Missing API Key');
 
   const response = await fetch(
-    `${SLIDES_API_BASE}/${presentationId}/pages/${pageObjectId}/thumbnail?thumbnailProperties.thumbnailSize=LARGE`,
-    { headers: { Authorization: `Bearer ${token}` } }
+    `${SLIDES_API_BASE}/${presentationId}/pages/${pageObjectId}/thumbnail?thumbnailProperties.thumbnailSize=LARGE&key=${apiKey}`
   );
 
   if (!response.ok) {
@@ -46,19 +38,15 @@ export async function fetchSlideThumbnailUrl(presentationId, pageObjectId) {
   }
 
   const data = await response.json();
-  return data.contentUrl; 
+  return data.contentUrl;
 }
 
 /**
- * Convenience function to fetch all slide image URLs for a presentation.
- * Returns an array of objects containing objectId and url.
- * @param {string} presentationId 
+ * Fetches all slide image URLs for a presentation.
  */
 export async function fetchAllSlideImages(presentationId) {
   const slides = await fetchPresentationSlides(presentationId);
-  
-  // To avoid hitting rate limits too aggressively, we could batch or delay, 
-  // but for small presentations Promise.all is usually fine.
+
   const slideData = await Promise.all(
     slides.map(async (slide) => {
       try {

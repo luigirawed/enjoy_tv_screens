@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import LoginScreen from './components/LoginScreen';
+import PinScreen from './components/PinScreen';
 import SlideViewer from './components/SlideViewer';
 import SettingsMenu from './components/SettingsMenu';
-import { getValidToken, clearTokens, handleRedirectResult } from './api/google-auth';
 import { fetchAllSlideImages } from './api/slides-fetcher';
 import { preloadImages } from './utils/image-cache';
 import { startScheduler } from './utils/scheduler';
@@ -10,15 +9,22 @@ import { getPublicIP, isIPAllowed } from './utils/ip-check';
 import './App.css';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [ipAllowed, setIpAllowed] = useState(null); // null = checking
 
+  // PIN gate
+  const correctPin = import.meta.env.VITE_ACCESS_PIN;
+  const [pinVerified, setPinVerified] = useState(() => {
+    // If no PIN is configured, skip the gate entirely
+    if (!correctPin) return true;
+    return localStorage.getItem('tv_pin_verified') === 'true';
+  });
+
   // Settings state
   const [showSettings, setShowSettings] = useState(false);
-  const [presentationId, setPresentationId] = useState(
+  const [presentationId] = useState(
     import.meta.env.VITE_SLIDES_PRESENTATION_ID ||
     localStorage.getItem('tv_presentation_id') || ''
   );
@@ -43,35 +49,17 @@ function App() {
     checkIP();
   }, []);
 
-  // Check auth on load (also handles returning from Google redirect)
-  useEffect(() => {
-    async function checkAuth() {
-      // First, check if we're returning from a Google redirect
-      const redirected = handleRedirectResult();
-      if (redirected) {
-        setIsAuthenticated(true);
-        setLoading(false);
-        return;
-      }
-      // Otherwise check for existing token
-      const token = await getValidToken();
-      if (token) setIsAuthenticated(true);
-      setLoading(false);
-    }
-    checkAuth();
-  }, []);
-
   // Save settings when changed
   useEffect(() => {
-    localStorage.setItem('tv_presentation_id', presentationId);
     localStorage.setItem('tv_interval', intervalSecs.toString());
     localStorage.setItem('tv_paused', isPaused.toString());
-  }, [presentationId, intervalSecs, isPaused]);
+  }, [intervalSecs, isPaused]);
 
   // Main slide fetcher
   const loadSlides = useCallback(async () => {
-    if (!isAuthenticated || !presentationId) {
+    if (!pinVerified || !presentationId) {
       setImages([]);
+      setLoading(false);
       return;
     }
 
@@ -80,8 +68,6 @@ function App() {
       setError(null);
       const fetchedImages = await fetchAllSlideImages(presentationId);
       const urls = fetchedImages.map(img => img.url);
-
-      // Preload images
       const cachedUrls = await preloadImages(urls);
       setImages(cachedUrls);
     } catch (err) {
@@ -90,29 +76,28 @@ function App() {
     } finally {
       setLoading(false);
     }
-  }, [isAuthenticated, presentationId]);
+  }, [pinVerified, presentationId]);
 
-  // Initial load when ID or Auth changes
+  // Initial load
   useEffect(() => {
     loadSlides();
   }, [loadSlides]);
 
   // Background 6-hour scheduler
   useEffect(() => {
-    if (!isAuthenticated || !presentationId) return;
-    
+    if (!pinVerified || !presentationId) return;
+
     const cleanup = startScheduler(() => {
       console.log("Executing scheduled background refresh");
       loadSlides();
     });
 
     return () => cleanup();
-  }, [isAuthenticated, presentationId, loadSlides]);
+  }, [pinVerified, presentationId, loadSlides]);
 
   // TV Remote Listener for opening settings
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Enter or Up arrow to open settings when not already open
       if (!showSettings && (e.key === 'ArrowUp' || e.key === 'Enter')) {
         setShowSettings(true);
       }
@@ -120,13 +105,6 @@ function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSettings]);
-
-  const handleLogout = () => {
-    clearTokens();
-    setIsAuthenticated(false);
-    setShowSettings(false);
-    setImages([]);
-  };
 
   // IP check gate
   if (ipAllowed === null) {
@@ -147,8 +125,9 @@ function App() {
     );
   }
 
-  if (!isAuthenticated && !loading) {
-    return <LoginScreen />;
+  // PIN gate
+  if (!pinVerified) {
+    return <PinScreen onSuccess={() => setPinVerified(true)} />;
   }
 
   return (
@@ -170,14 +149,14 @@ function App() {
       {!presentationId && !loading && (
         <div className="setup-prompt">
           <h2>Welcome!</h2>
-          <p>Press <strong>UP</strong> or <strong>ENTER</strong> on your remote to open Settings and set your Google Slides ID.</p>
+          <p>No presentation ID configured. Set <strong>VITE_SLIDES_PRESENTATION_ID</strong> in your environment.</p>
         </div>
       )}
 
-      <SlideViewer 
-        images={images} 
-        intervalSeconds={intervalSecs} 
-        isPaused={isPaused} 
+      <SlideViewer
+        images={images}
+        intervalSeconds={intervalSecs}
+        isPaused={isPaused}
       />
 
       <SettingsMenu
@@ -188,12 +167,15 @@ function App() {
         isPaused={isPaused}
         setPaused={setIsPaused}
         presentationId={presentationId}
-        setPresentationId={setPresentationId}
+        setPresentationId={() => {}} // Read-only from env now
         onForceRefresh={() => {
           loadSlides();
           setShowSettings(false);
         }}
-        onLogout={handleLogout}
+        onLogout={() => {
+          localStorage.removeItem('tv_pin_verified');
+          setPinVerified(false);
+        }}
       />
     </div>
   );
