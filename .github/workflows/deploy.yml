@@ -32,7 +32,7 @@ jobs:
 
       - name: Create .env from secrets
         run: |
-          echo "VITE_GOOGLE_API_KEY=${{ secrets.VITE_GOOGLE_API_KEY }}" >> .env
+          echo "VITE_BRIDGE_URL=${{ secrets.VITE_BRIDGE_URL }}" >> .env
           echo "VITE_SLIDES_PRESENTATION_ID=${{ secrets.VITE_SLIDES_PRESENTATION_ID }}" >> .env
           echo "VITE_ACCESS_PIN=${{ secrets.VITE_ACCESS_PIN }}" >> .env
           echo "VITE_ALLOWED_IPS=${{ secrets.VITE_ALLOWED_IPS }}" >> .env
