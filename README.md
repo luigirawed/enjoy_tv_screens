@@ -71,3 +71,5 @@ npm run dev
 - Check that GitHub Secrets are set correctly
 - Re-run the GitHub Actions workflow after changing secrets
 - The `VITE_SLIDES_PRESENTATION_ID` should NOT have quotes around it
+
+# END
