@@ -1,0 +1,112 @@
+.slide-viewer {
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-color, #000);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Slide area: occupies remaining space above the ticker */
+.slide-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+/* ─── Progress Bar ─── */
+.progress-bar-track {
+  width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4CAF50, #81C784);
+  transition: width 50ms linear;
+  will-change: width;
+}
+
+/* ─── Ticker Bar ─── */
+.ticker-bar {
+  width: 100%;
+  height: 10vh;
+  min-height: 60px;
+  background: linear-gradient(180deg, rgba(10, 10, 10, 0.95) 0%, rgba(0, 0, 0, 1) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 3vw;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.ticker-left {
+  display: flex;
+  align-items: center;
+}
+
+.ticker-logo {
+  height: 5vh;
+  min-height: 32px;
+  max-height: 64px;
+  width: auto;
+  object-fit: contain;
+}
+
+.ticker-right {
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Clock ─── */
+.clock-container {
+  text-align: right;
+  line-height: 1.3;
+}
+
+.clock-time {
+  font-size: 2.2rem;
+  font-weight: 600;
+  color: #ffffff;
+  letter-spacing: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock-date {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 400;
+}
+
+/* ─── Empty state ─── */
+.viewer-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  font-size: 2rem;
+  color: #888;
+  background-color: var(--bg-color, #000);
+}

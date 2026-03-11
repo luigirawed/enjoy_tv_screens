@@ -1,0 +1,93 @@
+.login-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--bg-color, #000);
+  color: var(--text-color, #fff);
+}
+
+.login-screen h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.login-screen p {
+  font-size: 1.5rem;
+  opacity: 0.8;
+  margin-bottom: 3rem;
+}
+
+.auth-box {
+  display: flex;
+  align-items: center;
+  gap: 4rem;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3rem;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.qr-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 10px;
+}
+
+.instructions {
+  text-align: left;
+  font-size: 1.5rem;
+}
+
+.instructions ol {
+  margin-bottom: 2rem;
+  padding-left: 1.5rem;
+}
+
+.instructions li {
+  margin-bottom: 1rem;
+}
+
+.user-code {
+  font-size: 4rem;
+  font-weight: bold;
+  letter-spacing: 12px;
+  color: #4CAF50;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.error-screen {
+  color: #f44336;
+}
+
+.error-screen h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.tv-button {
+  font-size: 1.5rem;
+  padding: 1rem 3rem;
+  background: #333;
+  color: white;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 2rem;
+  transition: all 0.2s ease;
+}
+
+.tv-button:focus, .tv-button:hover {
+  border-color: #4CAF50;
+  outline: none;
+  background: #444;
+  transform: scale(1.05);
+}
