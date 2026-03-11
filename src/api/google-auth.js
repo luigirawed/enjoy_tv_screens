@@ -12,8 +12,8 @@ export function redirectToGoogleLogin() {
     return;
   }
 
-  // The redirect URI must match what's configured in Google Cloud Console
-  const redirectUri = window.location.origin + window.location.pathname;
+  // Must exactly match what's in Google Cloud Console → Authorized redirect URIs
+  const redirectUri = import.meta.env.VITE_REDIRECT_URI || (window.location.origin + window.location.pathname);
 
   const params = new URLSearchParams({
     client_id: CLIENT_ID,

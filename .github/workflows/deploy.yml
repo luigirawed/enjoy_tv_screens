@@ -35,6 +35,7 @@ jobs:
           echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" >> .env
           echo "VITE_SLIDES_PRESENTATION_ID=${{ secrets.VITE_SLIDES_PRESENTATION_ID }}" >> .env
           echo "VITE_ALLOWED_IPS=${{ secrets.VITE_ALLOWED_IPS }}" >> .env
+          echo "VITE_REDIRECT_URI=${{ secrets.VITE_REDIRECT_URI }}" >> .env
 
       - name: Build
         run: npm run build
