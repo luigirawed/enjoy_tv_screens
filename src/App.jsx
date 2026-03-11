@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import LoginScreen from './components/LoginScreen';
 import SlideViewer from './components/SlideViewer';
 import SettingsMenu from './components/SettingsMenu';
-import { getValidToken, clearTokens } from './api/google-auth';
+import { getValidToken, clearTokens, handleRedirectResult } from './api/google-auth';
 import { fetchAllSlideImages } from './api/slides-fetcher';
 import { preloadImages } from './utils/image-cache';
 import { startScheduler } from './utils/scheduler';
@@ -43,9 +43,17 @@ function App() {
     checkIP();
   }, []);
 
-  // Check auth on load
+  // Check auth on load (also handles returning from Google redirect)
   useEffect(() => {
     async function checkAuth() {
+      // First, check if we're returning from a Google redirect
+      const redirected = handleRedirectResult();
+      if (redirected) {
+        setIsAuthenticated(true);
+        setLoading(false);
+        return;
+      }
+      // Otherwise check for existing token
       const token = await getValidToken();
       if (token) setIsAuthenticated(true);
       setLoading(false);
@@ -140,7 +148,7 @@ function App() {
   }
 
   if (!isAuthenticated && !loading) {
-    return <LoginScreen onLoginSuccess={() => setIsAuthenticated(true)} />;
+    return <LoginScreen />;
   }
 
   return (
