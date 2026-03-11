@@ -124,7 +124,7 @@ function App() {
   if (ipAllowed === null) {
     return (
       <div className="fullscreen-loader">
-        <img src="/logo.svg" alt="Logo" className="loader-logo" />
+        <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="loader-logo" />
         <div className="spinner"></div>
       </div>
     );
@@ -147,7 +147,7 @@ function App() {
     <div className="app-container">
       {loading && images.length === 0 && (
         <div className="fullscreen-loader">
-          <img src="/logo.svg" alt="Logo" className="loader-logo" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="loader-logo" />
           <div className="spinner"></div>
         </div>
       )}

@@ -98,7 +98,7 @@ export default function SlideViewer({ images, intervalSeconds, isPaused }) {
       {/* Ticker Bar */}
       <div className="ticker-bar">
         <div className="ticker-left">
-          <img src="/logo.svg" alt="Logo" className="ticker-logo" />
+          <img src={`${import.meta.env.BASE_URL}logo.svg`} alt="Logo" className="ticker-logo" />
         </div>
         <div className="ticker-right">
           <LiveClock />
