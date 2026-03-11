@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Settings, Play, Pause, RefreshCw, X, LogOut } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Settings, Play, Pause, RefreshCw, X, LogOut, Wifi, AlertCircle } from 'lucide-react';
+import { testBridgeConnection } from '../api/slides-fetcher';
 import './SettingsMenu.css';
 
 export default function SettingsMenu({
@@ -15,6 +16,8 @@ export default function SettingsMenu({
   onLogout
 }) {
   const menuRef = useRef(null);
+  const [bridgeStatus, setBridgeStatus] = useState(null); // null | 'testing' | 'success' | 'error'
+  const [bridgeError, setBridgeError] = useState('');
 
   // Simple roving tabindex implementation for TV Remotes
   useEffect(() => {
@@ -40,7 +43,7 @@ export default function SettingsMenu({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    
+
     // Focus first element for TV input consistency
     setTimeout(() => {
       const first = menuRef.current?.querySelector('.tv-focusable');
@@ -65,30 +68,61 @@ export default function SettingsMenu({
         <div className="settings-content">
           <div className="setting-group">
             <label>Google Slides ID</label>
-            <input 
-              type="text" 
-              className="tv-focusable" 
-              value={presentationId} 
+            <input
+              type="text"
+              className="tv-focusable"
+              value={presentationId}
               onChange={(e) => setPresentationId(e.target.value)}
               placeholder="e.g. 1BxiMvs... (found in URL)"
               readOnly={!!import.meta.env.VITE_SLIDES_PRESENTATION_ID}
             />
             <small>
-              {import.meta.env.VITE_SLIDES_PRESENTATION_ID 
-                ? "Id is currently locked by the .env file" 
+              {import.meta.env.VITE_SLIDES_PRESENTATION_ID
+                ? "Id is currently locked by the .env file"
                 : "Found in the slide's URL: /d/[ID_HERE]/edit"}
             </small>
           </div>
 
           <div className="setting-group">
             <label>Slide Duration (seconds)</label>
-            <input 
-              type="number" 
-              className="tv-focusable" 
-              value={interval} 
+            <input
+              type="number"
+              className="tv-focusable"
+              value={interval}
               onChange={(e) => setInterval(Number(e.target.value) || 10)}
               min="1"
             />
+          </div>
+
+          <div className="setting-group">
+            <label>Bridge Status</label>
+            <button
+              className="action-btn tv-focusable"
+              onClick={async () => {
+                setBridgeStatus('testing');
+                setBridgeError('');
+                const result = await testBridgeConnection();
+                if (result.success) {
+                  setBridgeStatus('success');
+                } else {
+                  setBridgeStatus('error');
+                  setBridgeError(result.error || `HTTP ${result.status}`);
+                }
+              }}
+              disabled={bridgeStatus === 'testing'}
+            >
+              <Wifi size={20} />
+              {bridgeStatus === 'testing' ? 'Testing...' : 'Test Bridge Connection'}
+            </button>
+            {bridgeStatus === 'success' && (
+              <div className="bridge-success">✓ Bridge is accessible</div>
+            )}
+            {bridgeStatus === 'error' && (
+              <div className="bridge-error">
+                <AlertCircle size={16} />
+                {bridgeError}
+              </div>
+            )}
           </div>
 
           <div className="setting-actions">
@@ -101,7 +135,7 @@ export default function SettingsMenu({
               <RefreshCw size={20} />
               Force Refresh Now
             </button>
-            
+
             <button className="action-btn danger tv-focusable" onClick={onLogout}>
               <LogOut size={20} />
               Lock Display
