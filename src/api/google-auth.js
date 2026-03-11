@@ -3,10 +3,16 @@ const CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 const SCOPES = 'https://www.googleapis.com/auth/presentations.readonly';
 
 let tokenClient = null;
+let initPromiseResolve = null;
+
+// A promise that resolves when the GSI client is actually ready
+export const gsiReady = new Promise((resolve) => {
+  initPromiseResolve = resolve;
+});
 
 /**
  * Initializes the Google Identity Services client.
- * Must be called after the Google `<script>` has loaded.
+ * Retries up to 30 seconds for the external script to load (TV browsers can be slow).
  */
 export function initGoogleIdentity(onTokenSuccess, onTokenError) {
   if (!CLIENT_ID) {
@@ -14,39 +20,52 @@ export function initGoogleIdentity(onTokenSuccess, onTokenError) {
     return;
   }
 
-  if (window.google?.accounts?.oauth2) {
-    tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: (tokenResponse) => {
-        if (tokenResponse && tokenResponse.access_token) {
-          saveToken(tokenResponse);
-          onTokenSuccess(tokenResponse.access_token);
-        } else {
-          onTokenError(tokenResponse.error || 'Authentication failed');
-        }
-      },
-    });
-  } else {
-    // If google script isn't loaded yet, try again in a bit
-    setTimeout(() => initGoogleIdentity(onTokenSuccess, onTokenError), 500);
+  let attempts = 0;
+  const maxAttempts = 60; // 60 x 500ms = 30 seconds of retrying
+
+  function tryInit() {
+    attempts++;
+
+    if (window.google?.accounts?.oauth2) {
+      tokenClient = window.google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: SCOPES,
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            saveToken(tokenResponse);
+            onTokenSuccess(tokenResponse.access_token);
+          } else {
+            onTokenError(tokenResponse.error_description || tokenResponse.error || 'Authentication failed');
+          }
+        },
+      });
+      console.log(`GSI client initialized after ${attempts} attempt(s)`);
+      initPromiseResolve(true);
+    } else if (attempts < maxAttempts) {
+      setTimeout(tryInit, 500);
+    } else {
+      console.error('Google Identity Services script failed to load after 30 seconds.');
+      initPromiseResolve(false);
+    }
   }
+
+  tryInit();
 }
 
 /**
- * Triggers the Google Sign-In popup
+ * Triggers the Google Sign-In popup.
+ * Returns false if the client isn't ready yet.
  */
 export function requestLogin() {
   if (!tokenClient) {
-    throw new Error('Google Identity client not initialized');
+    return false;
   }
-  // Request an access token (implicit flow, no refresh token)
   tokenClient.requestAccessToken({ prompt: 'consent' });
+  return true;
 }
 
 function saveToken(tokenData) {
   localStorage.setItem('g_access_token', tokenData.access_token);
-  // tokens from implicit flow usually expire in 3600s
   const expiryTime = Date.now() + (tokenData.expires_in * 1000);
   localStorage.setItem('g_token_expiry', expiryTime.toString());
 }
@@ -57,13 +76,11 @@ export function getAccessToken() {
   
   if (token && expiry && expiry !== 'undefined') {
     const expiresAt = parseInt(expiry, 10);
-    // Add 5 min buffer to expiry
     if (expiresAt > Date.now() + 300000) {
       return token;
     }
   }
   
-  // If no token or expired, clear them
   clearTokens();
   return null;
 }
@@ -71,9 +88,6 @@ export function getAccessToken() {
 export async function getValidToken() {
   const token = getAccessToken();
   if (token) return token;
-
-  // We don't have refresh tokens in the implicit flow
-  // We must return null and prompt the user to click login again
   return null;
 }
 
