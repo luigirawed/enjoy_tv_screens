@@ -16,14 +16,16 @@
   background: rgba(30, 30, 30, 0.9);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  width: 600px;
-  max-width: 90%;
-  padding: 2rem;
+  width: 800px;
+  max-width: 95%;
+  padding: 1.5rem;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   color: white;
+  max-height: 90vh;
+  overflow: hidden;
 }
 
 .settings-header {
@@ -59,6 +61,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .setting-group label {
@@ -82,11 +85,32 @@
   margin-top: 0.25rem;
 }
 
-.setting-actions {
-  display: flex;
-  flex-direction: column;
+/* Fields row for side-by-side layout */
+.settings-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  margin-top: 1rem;
+}
+
+.settings-fields-row .setting-group {
+  margin-bottom: 0;
+}
+
+/* Bridge status full width */
+.setting-group:has(.bridge-success),
+.setting-group:has(.bridge-error) {
+  grid-column: span 2;
+}
+
+.setting-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.setting-actions .action-btn.danger {
+  grid-column: span 2;
 }
 
 .action-btn {

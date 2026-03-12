@@ -66,32 +66,34 @@ export default function SettingsMenu({
         </div>
 
         <div className="settings-content">
-          <div className="setting-group">
-            <label>Google Slides ID</label>
-            <input
-              type="text"
-              className="tv-focusable"
-              value={presentationId}
-              onChange={(e) => setPresentationId(e.target.value)}
-              placeholder="e.g. 1BxiMvs... (found in URL)"
-              readOnly={!!import.meta.env.VITE_SLIDES_PRESENTATION_ID}
-            />
-            <small>
-              {import.meta.env.VITE_SLIDES_PRESENTATION_ID
-                ? "Id is currently locked by the .env file"
-                : "Found in the slide's URL: /d/[ID_HERE]/edit"}
-            </small>
-          </div>
+          <div className="settings-fields-row">
+            <div className="setting-group">
+              <label>Google Slides ID</label>
+              <input
+                type="text"
+                className="tv-focusable"
+                value={presentationId}
+                onChange={(e) => setPresentationId(e.target.value)}
+                placeholder="e.g. 1BxiMvs... (found in URL)"
+                readOnly={!!import.meta.env.VITE_SLIDES_PRESENTATION_ID}
+              />
+              <small>
+                {import.meta.env.VITE_SLIDES_PRESENTATION_ID
+                  ? "ID is locked in configuration"
+                  : "Found in the slide's URL: /d/[ID_HERE]/edit"}
+              </small>
+            </div>
 
-          <div className="setting-group">
-            <label>Slide Duration (seconds)</label>
-            <input
-              type="number"
-              className="tv-focusable"
-              value={interval}
-              onChange={(e) => setInterval(Number(e.target.value) || 10)}
-              min="1"
-            />
+            <div className="setting-group">
+              <label>Slide Duration (seconds)</label>
+              <input
+                type="number"
+                className="tv-focusable"
+                value={interval}
+                onChange={(e) => setInterval(Number(e.target.value) || 10)}
+                min="1"
+              />
+            </div>
           </div>
 
           <div className="setting-group">
