@@ -103,6 +103,56 @@ function App() {
     return () => cleanup();
   }, [isAuthorized, presentationId, loadSlides]);
 
+  // Wake Lock to prevent screen from sleeping
+  useEffect(() => {
+    let wakeLock = null;
+
+    const requestWakeLock = async () => {
+      if (!isAuthorized) return;
+
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLock = await navigator.wakeLock.request('screen');
+          console.log('Wake Lock active - screen will stay on');
+        }
+      } catch (err) {
+        console.log('Wake Lock not available:', err.message);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      if (wakeLock) {
+        try {
+          await wakeLock.release();
+          wakeLock = null;
+          console.log('Wake Lock released');
+        } catch (err) {
+          console.log('Error releasing wake lock:', err.message);
+        }
+      }
+    };
+
+    // Request wake lock when authorized
+    if (isAuthorized) {
+      requestWakeLock();
+    }
+
+    // Handle visibility change (tab becomes visible again)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && isAuthorized) {
+        await releaseWakeLock();
+        await requestWakeLock();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      releaseWakeLock();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isAuthorized]);
+
   // TV Remote Listener for opening settings
   useEffect(() => {
     const handleKeyDown = (e) => {
