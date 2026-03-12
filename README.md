@@ -57,6 +57,9 @@ cp .env.example .env
 npm run dev
 ```
 
+### Documentation & AI Skills
+A complete technical walkthrough of the core app flow and authentication strategy can be found in the associated `walkthrough.md` document. AI instructions and operational boundaries for this repository are defined as an AI Skill inside `_agents/skills/enjoy_tv_screens.md`.
+
 ## Troubleshooting
 
 ### "Could not open slides. Check ID and permissions."
