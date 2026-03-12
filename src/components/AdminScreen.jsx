@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Key, Check, X, Monitor, RefreshCw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, X, Monitor, RefreshCw, Lock } from 'lucide-react';
 import {
-    getPin,
     isValidPairingCode,
     authorizeDisplay,
     getDisplayId,
@@ -11,12 +10,10 @@ import './AdminScreen.css';
 
 export default function AdminScreen({ onComplete }) {
     const [displayCode, setDisplayCode] = useState('');
-    const [pin, setPin] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    const correctPin = getPin();
     const currentDisplayId = getDisplayId();
     const currentAuth = getAuthorization();
 
@@ -26,16 +23,6 @@ export default function AdminScreen({ onComplete }) {
 
         if (!isValidPairingCode(displayCode)) {
             setError('Please enter a valid 6-character display code');
-            return;
-        }
-
-        if (!pin) {
-            setError('Please enter the PIN');
-            return;
-        }
-
-        if (pin !== correctPin) {
-            setError('Incorrect PIN');
             return;
         }
 
@@ -60,32 +47,18 @@ export default function AdminScreen({ onComplete }) {
     };
 
     const handleRefreshAuth = () => {
-        if (pin === correctPin) {
-            authorizeDisplay({
-                displayCode: currentDisplayId,
-                refreshed: true
-            });
-            setSuccess(true);
-            setTimeout(() => setSuccess(false), 2000);
-        }
+        authorizeDisplay({
+            displayCode: currentDisplayId,
+            refreshed: true
+        });
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 2000);
     };
-
-    if (!correctPin) {
-        return (
-            <div className="admin-screen">
-                <div className="admin-error">
-                    <X size={48} />
-                    <h2>Configuration Error</h2>
-                    <p>No PIN has been configured. Please set VITE_ACCESS_PIN in your environment.</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="admin-screen">
             <div className="admin-container">
-                <Key size={48} className="admin-icon" />
+                <Lock size={48} className="admin-icon" />
                 <h1>Display Authorization</h1>
 
                 {currentAuth && (
@@ -100,7 +73,6 @@ export default function AdminScreen({ onComplete }) {
                         <button
                             className="refresh-auth-btn"
                             onClick={handleRefreshAuth}
-                            disabled={pin !== correctPin}
                         >
                             <RefreshCw size={16} />
                             Extend Authorization
@@ -127,22 +99,6 @@ export default function AdminScreen({ onComplete }) {
                         <small>Enter the code shown on the TV display</small>
                     </div>
 
-                    <div className="form-group">
-                        <label htmlFor="pin">
-                            <Key size={18} />
-                            Admin PIN
-                        </label>
-                        <input
-                            id="pin"
-                            type="password"
-                            value={pin}
-                            onChange={(e) => setPin(e.target.value)}
-                            placeholder="Enter PIN"
-                            className="pin-input"
-                            autoComplete="off"
-                        />
-                    </div>
-
                     {error && (
                         <div className="error-message">
                             <X size={16} />
@@ -160,7 +116,7 @@ export default function AdminScreen({ onComplete }) {
                     <button
                         type="submit"
                         className="authorize-btn"
-                        disabled={loading || !displayCode || !pin}
+                        disabled={loading || !displayCode}
                     >
                         {loading ? (
                             <>Authorizing...</>
@@ -178,7 +134,6 @@ export default function AdminScreen({ onComplete }) {
                     <ol>
                         <li>The TV shows a 6-character display code</li>
                         <li>Enter that code above</li>
-                        <li>Enter the admin PIN</li>
                         <li>The TV will be authorized for 30 days</li>
                     </ol>
                 </div>

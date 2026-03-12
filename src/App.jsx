@@ -2,24 +2,45 @@ import React, { useState, useEffect, useCallback } from 'react';
 import SlideViewer from './components/SlideViewer';
 import SettingsMenu from './components/SettingsMenu';
 import DisplayCodeScreen from './components/DisplayCodeScreen';
-import AdminScreen from './components/AdminScreen';
+import PinEntryScreen from './components/PinEntryScreen';
 import { fetchAllSlideImages } from './api/slides-fetcher';
 import { preloadImages } from './utils/image-cache';
 import { startScheduler } from './utils/scheduler';
-import { isDisplayAuthorized, isAdminMode, revokeAuthorization } from './utils/display-pairing';
+import { isDisplayAuthorized, revokeAuthorization } from './utils/display-pairing';
+import { getPublicIP, isIPAllowed } from './utils/ip-check';
 import './App.css';
 
 function App() {
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [ipValidated, setIpValidated] = useState(false);
+  const [ipCheckComplete, setIpCheckComplete] = useState(false);
 
-  // Check if we're in admin mode (for pairing displays)
-  const isAdmin = isAdminMode();
+  // Check IP on mount - only allow admin access from allowed IPs
+  useEffect(() => {
+    const checkIP = async () => {
+      const allowedIPs = import.meta.env.VITE_ALLOWED_IPS;
+
+      // If no IP restriction configured, allow access
+      if (!allowedIPs) {
+        setIpValidated(true);
+        setIpCheckComplete(true);
+        return;
+      }
+
+      const clientIP = await getPublicIP();
+      const isAllowed = isIPAllowed(clientIP, allowedIPs);
+
+      setIpValidated(isAllowed);
+      setIpCheckComplete(true);
+    };
+
+    checkIP();
+  }, []);
 
   // Check if this display is authorized
   const [isAuthorized, setIsAuthorized] = useState(() => {
-    if (isAdmin) return true; // Admin mode doesn't need authorization
     return isDisplayAuthorized();
   });
 
@@ -93,17 +114,34 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showSettings]);
 
-  // Render admin screen if in admin mode
-  if (isAdmin) {
-    return <AdminScreen onComplete={() => {
-      // Remove admin param and reload
-      window.location.href = window.location.pathname;
-    }} />;
+  // Handle successful PIN authorization on TV
+  const handlePinAuthorized = () => {
+    setIsAuthorized(true);
+  };
+
+  // Wait for IP check to complete
+  if (!ipCheckComplete) {
+    return (
+      <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#1a1a2e', color: '#fff' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div className="spinner"></div>
+          <p style={{ marginTop: '20px' }}>Checking authorization...</p>
+        </div>
+      </div>
+    );
   }
 
-  // Render setup screen if not authorized
+  // Render authorization screens based on IP status
+  // If IP is allowed and not authorized → show PIN entry (TV can self-authorize)
+  // If IP is not allowed and not authorized → show display code (needs external admin)
   if (!isAuthorized) {
-    return <DisplayCodeScreen />;
+    if (ipValidated) {
+      // IP is allowed - TV can enter PIN to authorize itself
+      return <PinEntryScreen onAuthorized={handlePinAuthorized} />;
+    } else {
+      // IP is not allowed - need external admin device
+      return <DisplayCodeScreen />;
+    }
   }
 
   return (

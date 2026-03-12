@@ -43,9 +43,9 @@ export default function DisplayCodeScreen({ onAuthorized }) {
                     <h2>How to authorize this display:</h2>
                     <ol>
                         <li>Open this app on a phone or computer</li>
-                        <li>Add <strong>?admin=true</strong> to the URL</li>
+                        <li>Add <strong>?pin=232323</strong> to the URL</li>
                         <li>Enter the code above: <strong>{displayCode}</strong></li>
-                        <li>Enter the PIN to complete authorization</li>
+                        <li>The display will be authorized for 30 days</li>
                     </ol>
                 </div>
 

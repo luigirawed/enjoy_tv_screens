@@ -6,8 +6,8 @@
  * Flow:
  * 1. TV generates a unique display ID (stored in localStorage)
  * 2. TV shows a 6-character pairing code
- * 3. Admin visits the app with ?admin=true on another device
- * 4. Admin enters the pairing code + PIN to authorize the display
+ * 3. Admin visits the app with ?pin=XXXXXX (6-digit PIN) from an allowed IP
+ * 4. Admin enters the pairing code to authorize the display
  * 5. Authorization is stored in localStorage on the TV (expires in 30 days)
  */
 
@@ -97,11 +97,19 @@ export function revokeAuthorization() {
 }
 
 /**
- * Check if admin mode is requested
+ * Check if admin mode is requested via URL PIN parameter
+ * User must provide ?pin=XXXXXX where XXXXXX is the 6-digit PIN
  */
 export function isAdminMode() {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('admin') === 'true';
+    const pinParam = urlParams.get('pin');
+    const correctPin = getPin();
+
+    // If no PIN configured, admin mode is disabled
+    if (!correctPin) return false;
+
+    // Check if PIN matches (exactly 6 digits)
+    return pinParam === correctPin;
 }
 
 /**
