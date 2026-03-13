@@ -39,7 +39,7 @@ function doGet(e) {
       });
     }
     
-    var slides = presentation.getSlides();
+    var slides = presentation.getVisibleSlides();
     
     if (!slides || slides.length === 0) {
       return jsonResponse({ error: "Presentation has no slides" });
