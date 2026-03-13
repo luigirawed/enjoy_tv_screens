@@ -53,7 +53,7 @@ function doGet(e) {
       var slide = slides[i];
       var objectId = slide.getObjectId();
       
-      // Check if slide is visible/hidden using the REST API
+      // Check if slide is skipped/hidden using the REST API
       var isVisible = true;
       try {
         var slideUrl = "https://slides.googleapis.com/v1/presentations/" + 
@@ -65,11 +65,12 @@ function doGet(e) {
         
         if (slideRes.getResponseCode() === 200) {
           var slideData = JSON.parse(slideRes.getContentText());
-          var visibility = "VISIBLE";
-          if (slideData.pageProperties && slideData.pageProperties.pageVisibility) {
-            visibility = slideData.pageProperties.pageVisibility;
+          // Check slideProperties.isSkipped - if true, the slide is hidden from the slideshow
+          var isSkipped = false;
+          if (slideData.slideProperties && slideData.slideProperties.isSkipped !== undefined) {
+            isSkipped = slideData.slideProperties.isSkipped;
           }
-          isVisible = (visibility === "VISIBLE");
+          isVisible = !isSkipped; // If isSkipped is true, slide is not visible
         }
       } catch (err) {
         // Default to visible if we can't check
