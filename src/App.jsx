@@ -75,7 +75,9 @@ function App() {
       setLoading(true);
       setError(null);
       const fetchedImages = await fetchAllSlideImages(presentationId);
-      const urls = fetchedImages.map(img => img.url);
+      // Filter out hidden slides - only show visible slides
+      const visibleImages = fetchedImages.filter(img => img.isVisible !== false);
+      const urls = visibleImages.map(img => img.url);
       const cachedUrls = await preloadImages(urls);
       setImages(cachedUrls);
     } catch (err) {

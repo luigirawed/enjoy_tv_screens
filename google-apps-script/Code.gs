@@ -1,5 +1,5 @@
 /**
- * Google TV Slides Bridge - Version with Explicit Scopes
+ * Google TV Slides Bridge - Version that includes visibility info
  * 
  * DEPLOYMENT:
  * 1. Go to script.google.com/create
@@ -39,7 +39,7 @@ function doGet(e) {
       });
     }
     
-    var slides = presentation.getVisibleSlides();
+    var slides = presentation.getSlides();
     
     if (!slides || slides.length === 0) {
       return jsonResponse({ error: "Presentation has no slides" });
@@ -53,11 +53,34 @@ function doGet(e) {
       var slide = slides[i];
       var objectId = slide.getObjectId();
       
+      // Check if slide is visible/hidden using the REST API
+      var isVisible = true;
+      try {
+        var slideUrl = "https://slides.googleapis.com/v1/presentations/" + 
+                       presentationId + "/pages/" + objectId;
+        var slideRes = UrlFetchApp.fetch(slideUrl, {
+          headers: { "Authorization": "Bearer " + token },
+          muteHttpExceptions: true
+        });
+        
+        if (slideRes.getResponseCode() === 200) {
+          var slideData = JSON.parse(slideRes.getContentText());
+          var visibility = "VISIBLE";
+          if (slideData.pageProperties && slideData.pageProperties.pageVisibility) {
+            visibility = slideData.pageProperties.pageVisibility;
+          }
+          isVisible = (visibility === "VISIBLE");
+        }
+      } catch (err) {
+        // Default to visible if we can't check
+        isVisible = true;
+      }
+      
       try {
         var thumbUrl = "https://slides.googleapis.com/v1/presentations/" + 
                        presentationId + "/pages/" + objectId + "/thumbnail" +
                        "?thumbnailProperties.thumbnailSize=LARGE";
-                       
+                        
         var thumbRes = UrlFetchApp.fetch(thumbUrl, {
           headers: { "Authorization": "Bearer " + token },
           muteHttpExceptions: true
@@ -68,12 +91,14 @@ function doGet(e) {
           imageUrls.push({
             objectId: objectId,
             url: thumbData.contentUrl,
-            slideNumber: i + 1
+            slideNumber: i + 1,
+            isVisible: isVisible
           });
         } else {
           imageUrls.push({
             objectId: objectId,
             slideNumber: i + 1,
+            isVisible: isVisible,
             error: "Thumbnail failed: " + thumbRes.getResponseCode()
           });
         }
@@ -81,6 +106,7 @@ function doGet(e) {
         imageUrls.push({
           objectId: objectId,
           slideNumber: i + 1,
+          isVisible: isVisible,
           error: thumbErr.message
         });
       }
