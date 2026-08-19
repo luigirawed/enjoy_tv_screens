@@ -1,5 +1,6 @@
 {
     "timeZone": "Europe/London",
+    "runtimeVersion": "V8",
     "dependencies": {
         "enabledAdvancedServices": [
             {
